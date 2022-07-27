@@ -29,3 +29,10 @@ class UserNotFoundError(PrefixError):
 
 class ChannelNotFoundError(PrefixError):
     """Channel could not be found."""
+
+
+class CommandNotFoundError(PrefixError):
+    """The command was not found"""
+    def __init__(self, name: str) -> None:
+        self.name = name
+        super().__init__(f"Command `{name}` was not registered.")

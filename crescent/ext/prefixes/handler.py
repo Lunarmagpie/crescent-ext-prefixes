@@ -6,6 +6,7 @@ from crescent.internal import MetaStruct
 
 import hikari
 
+from .exceptions import CommandNotFoundError
 from .typedefs import PrefixCommandProto
 from .context import Context
 
@@ -43,7 +44,7 @@ class Handler:
 
         command_class = self.registry.get(command_name)
         if not command_class:
-            raise Exception("COMMAND NOT FOUND")
+            raise CommandNotFoundError(command_name)
 
         await command_class(
             Context(

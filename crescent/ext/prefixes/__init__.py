@@ -73,6 +73,10 @@ async def _prefix_command_callback(
     else:
         options = cmd.metadata.app.options
 
+    if len(options) > len(ctx._arguments):
+        await instance.incorrect_argument_count(ctx, ctx._arguments)
+        return
+
     remaining_args = ctx._arguments[len(options) :]
 
     for k, v in cls.__dict__.items():
@@ -82,6 +86,7 @@ async def _prefix_command_callback(
     else:
         if len(remaining_args) != 0:
             await instance.incorrect_argument_count(ctx, ctx._arguments)
+            return
 
     async def handle_arg(option: CommandOption, arg: str) -> Exception | None:
         try:

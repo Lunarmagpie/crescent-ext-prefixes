@@ -3,14 +3,15 @@ from asyncio import gather
 
 from functools import partial
 from inspect import isclass
-from typing import Any, Sequence, cast
+from typing import Any, Callable, Sequence, cast, overload
 
 from crescent import command
-from crescent.internal import MetaStruct, AppCommandMeta
+from crescent.internal import Includable, AppCommandMeta
 from crescent.internal.registry import _command_app_set_hook
 from hikari import CommandOption
 
 from .context import Context
+from .combined_command import CombinedCommand, CombinedContext
 from .typedefs import PrefixCommandProto
 from .handler import set_prefix, HANDLER_MAP
 from .serializer import serialize
@@ -21,38 +22,52 @@ from .exceptions import ParsingError
 __all__: Sequence[str] = (
     "prefix_command",
     "Context",
+    "CombinedCommand",
+    "CombinedContext",
     "set_prefix",
     "star_args",
 )
 
 
+@overload
 def prefix_command(
-    cls_or_meta: PrefixCommandProto | MetaStruct[Any, Any] | None = None,
+    cls_or_meta: PrefixCommandProto | Includable[Any], /
+) -> Includable[Any]:
+    ...
+
+
+@overload
+def prefix_command(*, name: str | None = None) -> Callable[..., Includable[Any]]:
+    ...
+
+
+def prefix_command(
+    cls_or_meta: PrefixCommandProto | Includable[Any] | None = None,
     /,
     *,
     name: str | None = None,
-) -> MetaStruct[Any, Any]:
+) -> Any:
 
     if cls_or_meta is None:
         return partial(
             prefix_command,
             name=name,
-        )  # type: ignore
+        )
 
-    cmd: MetaStruct[Any, Any]
+    cmd: Includable[Any]
     cls: PrefixCommandProto | None
     if isclass(cls_or_meta):
-        cls = cast("PrefixCommandProto", cls_or_meta)
+        cls = cast(PrefixCommandProto, cls_or_meta)
         cmd = command(name=name)(cls_or_meta)
         cmd.app_set_hooks = list(
             filter(lambda hook: hook is not _command_app_set_hook, cmd.app_set_hooks)
         )
     else:
-        cmd = cls_or_meta  # type: ignore
+        cmd = cast(Includable[Any], cls_or_meta)
+        cls = cmd.metadata.owner
 
-    def _app_set_hook(self: MetaStruct[Any, Any]) -> None:
-        print(cmd.metadata.app.name)
-        HANDLER_MAP[self.app].registry[cmd.metadata.app.name] = partial(
+    def _app_set_hook(self: Includable[Any]) -> None:
+        HANDLER_MAP[self.app].registry[cmd.metadata.app_command.name] = partial(
             _prefix_command_callback, cls, cmd
         )
 
@@ -62,16 +77,16 @@ def prefix_command(
 
 
 async def _prefix_command_callback(
-    cls: type[PrefixCommandProto], cmd: MetaStruct[Any, AppCommandMeta], ctx: Context
+    cls: type[PrefixCommandProto], cmd: Includable[AppCommandMeta], ctx: Context
 ) -> None:
 
     instance = cls()
 
     options: Sequence[CommandOption]
-    if not cmd.metadata.app.options:
+    if not cmd.metadata.app_command.options:
         options = []
     else:
-        options = cmd.metadata.app.options
+        options = cmd.metadata.app_command.options
 
     if len(options) > len(ctx._arguments):
         await instance.incorrect_argument_count(ctx, ctx._arguments)
@@ -105,4 +120,4 @@ async def _prefix_command_callback(
             await instance.parsing_error(ctx, arg, index, option.name, value)
             break
     else:
-        await instance.callback(ctx)
+        await instance.prefix_callback(ctx)

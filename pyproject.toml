@@ -10,7 +10,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
-hikari-crescent = "^0.2.2"
+hikari-crescent = "^0.3.3"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"

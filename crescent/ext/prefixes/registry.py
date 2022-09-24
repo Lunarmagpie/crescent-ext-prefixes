@@ -2,7 +2,7 @@ from __future__ import annotations
 import dataclasses
 from typing import Any
 
-from crescent.internal import MetaStruct
+from crescent.internal import Includable
 
 from .typedefs import PrefixCommandProto
 
@@ -13,4 +13,4 @@ class CommandID:
 
 
 class PrefixReg:
-    registry: dict[CommandID, MetaStruct[Any, PrefixCommandProto]] = {}
+    registry: dict[CommandID, Includable[PrefixCommandProto]] = {}

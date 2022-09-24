@@ -1,13 +1,11 @@
 from __future__ import annotations
 import dataclasses
-from typing import Any, Awaitable, Callable, Sequence, cast
+from typing import Awaitable, Callable, Sequence, cast
 import crescent
-from crescent.internal import MetaStruct
 
 import hikari
 
 from .exceptions import CommandNotFoundError
-from .typedefs import PrefixCommandProto
 from .context import Context
 
 HANDLER_MAP: dict[crescent.Bot, Handler] = {}

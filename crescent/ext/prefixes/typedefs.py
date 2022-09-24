@@ -6,7 +6,7 @@ from .exceptions import ParsingError
 
 
 class PrefixCommandProto(Protocol):
-    async def callback(self, ctx: Context) -> None:
+    async def prefix_callback(self, ctx: Context) -> None:
         ...
 
     async def incorrect_argument_count(self, ctx: Context, args: list[str]) -> None:
